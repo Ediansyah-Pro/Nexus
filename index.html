@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS - Incident Ticketing System</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js Engine -->
+    <script src="chart.umd.min.js"></script>
+</head>
+<body class="dark-theme">
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-top-bar">
+                <span class="sidebar-header-label"><i class="fa-solid fa-layer-group"></i> Menu Navigasi</span>
+                <button type="button" class="btn-sidebar-collapse" id="btn-sidebar-collapse" title="Sembunyikan Menu" aria-label="Sembunyikan Menu">
+                    <i class="fa-solid fa-angles-left"></i>
+                </button>
+            </div>
+            <nav class="nav-menu">
+                <!-- Executive Dashboard Dropdown Menu Group (At the top) -->
+                <div class="nav-dropdown" id="nav-exec-dropdown">
+                    <button type="button" class="nav-item nav-dropdown-toggle" id="btn-exec-dropdown-toggle" aria-expanded="false">
+                        <span class="nav-dropdown-label">
+                            <i class="fa-solid fa-gauge-high"></i> Executive Dashboard
+                        </span>
+                        <i class="fa-solid fa-chevron-down nav-dropdown-arrow"></i>
+                    </button>
+                    <div class="nav-dropdown-menu" id="exec-dropdown-menu">
+                        <a href="#" class="nav-item nav-dropdown-item" id="btn-exec-infra-dashboard">
+                            <i class="fa-solid fa-network-wired"></i> INFRA Ticket
+                        </a>
+                        <a href="#" class="nav-item nav-dropdown-item" id="btn-exec-corp-dashboard">
+                            <i class="fa-solid fa-building"></i> Corporate Ticket
+                        </a>
+                    </div>
+                </div>
+
+                <a href="#" class="nav-item active" id="btn-noc-dashboard">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard NOC
+                </a>
+                <a href="#" class="nav-item" id="btn-infra-tickets">
+                    <i class="fa-solid fa-network-wired"></i> Infra Ticket
+                </a>
+                <a href="#" class="nav-item" id="btn-corporate-tickets">
+                    <i class="fa-solid fa-building"></i> Corporate Ticket
+                </a>
+                <a href="#" class="nav-item" id="btn-sla-dashboard">
+                    <i class="fa-solid fa-chart-pie"></i> SLA
+                </a>
+                <a href="#" class="nav-item" id="btn-customer-db">
+                    <i class="fa-solid fa-users"></i> Customer
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <!-- Theme Switcher & Settings Toggle side-by-side -->
+                <div class="footer-controls">
+                    <div class="theme-switch-wrapper">
+                        <span class="theme-label"><i class="fa-solid fa-circle-half-stroke"></i> Mode</span>
+                        <label class="switch-control">
+                            <input type="checkbox" id="theme-toggle" checked>
+                            <span class="switch-slider"></span>
+                        </label>
+                    </div>
+                    <button class="btn-config-toggle" id="btn-database-config" title="Konfigurasi Database">
+                        <i class="fa-solid fa-cog"></i>
+                    </button>
+                </div>
+                <div class="connection-box mt-3">
+                    <p>Status Database</p>
+                    <div class="connection-status offline" id="db-connection-badge">
+                        <span class="status-dot"></span>
+                        <span id="connection-status-text">Belum Terhubung</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Floating sidebar expand tab (visible when sidebar is collapsed) -->
+        <button type="button" class="btn-floating-sidebar-toggle" id="btn-floating-sidebar-toggle" title="Tampilkan Menu" aria-label="Tampilkan Menu">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="content-header">
+                <div class="header-left">
+                    <button type="button" class="btn-sidebar-toggle" id="btn-sidebar-toggle" title="Ciutkan / Tampilkan Menu" aria-label="Toggle Sidebar">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <div class="page-title">
+                        <h2 id="section-title">Infra Tickets</h2>
+                        <p id="section-subtitle">Daftar insiden jaringan dan infrastruktur</p>
+                    </div>
+                </div>
+            </header>
+
+            <!-- NOC Dashboard Section (Default landing page) -->
+            <section id="noc-dashboard-section" class="content-section">
+                <!-- NOC Header (Blue bar) -->
+                <div style="display: flex; justify-content: space-between; align-items: center; background-color: var(--accent-primary); color: #ffffff; padding: 12px 20px; border-radius: var(--radius-md); margin-bottom: 24px;">
+                    <h2 style="font-size: 16px; font-weight: 700; letter-spacing: 0.5px; margin: 0; text-transform: uppercase;">NOC DASHBOARD</h2>
+                    <span style="font-size: 11px; font-weight: 600;" id="noc-last-update">LAST UPDATE : --/--/---- --:--:--</span>
+                </div>
+
+                <!-- Vertical stacked dashboard summaries -->
+                <div style="display: flex; flex-direction: column; gap: 24px;">
+                    
+                    <!-- 1. INFRA TICKET CARD -->
+                    <div class="form-card" style="padding: 24px;">
+                        <h3 style="font-size: 13px; font-weight: 700; text-align: left; text-transform: uppercase; margin-bottom: 16px; color: var(--accent-secondary); letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                            <i class="fa-solid fa-square-poll-vertical"></i> INFRA TICKET SUMMARY & INCIDENT STREAM
+                        </h3>
+                        
+                        <div class="noc-grid-card">
+                            <!-- Left: Visual Stats Panel -->
+                            <div class="noc-visual-panel">
+                                <!-- Scorecards (Open, Progress, On Hold) -->
+                                <div class="noc-summary-container">
+                                    <div class="noc-stat-box open">
+                                        <div class="noc-stat-label">Open</div>
+                                        <div class="noc-stat-number" id="noc-infra-open">0</div>
+                                    </div>
+                                    <div class="noc-stat-box progress">
+                                        <div class="noc-stat-label">Progress</div>
+                                        <div class="noc-stat-number" id="noc-infra-progress">0</div>
+                                    </div>
+                                    <div class="noc-stat-box onhold">
+                                        <div class="noc-stat-label">On Hold</div>
+                                        <div class="noc-stat-number" id="noc-infra-onhold">0</div>
+                                    </div>
+                                </div>
+                                
+                                <div style="display: flex; align-items: center; justify-content: space-around; gap: 16px; margin: 15px 0;">
+                                    <!-- Circular Radial Gauge -->
+                                    <div class="noc-radial-wrapper">
+                                        <svg width="100" height="100" viewBox="0 0 100 100">
+                                            <circle cx="50" cy="50" r="42" class="noc-gauge-bg"></circle>
+                                            <circle cx="50" cy="50" r="42" class="noc-gauge-fill" id="noc-infra-gauge-fill" stroke-dasharray="264" stroke-dashoffset="264"></circle>
+                                        </svg>
+                                        <div class="noc-radial-text">
+                                            <span class="num" id="noc-infra-active-count">0</span>
+                                            <span class="lbl">Aktif</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Severity Bar Container -->
+                                    <div style="flex: 1;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">
+                                            <span>DIAGRAM KEPARAHAN</span>
+                                            <span id="noc-infra-severity-text">0 Crit / 0 Maj</span>
+                                        </div>
+                                        <div class="severity-progress-bar">
+                                            <div class="severity-seg critical" id="noc-infra-seg-crit" style="width: 0%;"></div>
+                                            <div class="severity-seg major" id="noc-infra-seg-maj" style="width: 0%;"></div>
+                                            <div class="severity-seg minor" id="noc-infra-seg-min" style="width: 0%;"></div>
+                                            <div class="severity-seg low" id="noc-infra-seg-low" style="width: 0%;"></div>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-muted); margin-top: 6px;">
+                                            <span>🔴 Crit</span>
+                                            <span>🟡 Maj</span>
+                                            <span>🟢 Min</span>
+                                            <span>🔵 Low</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Right: Live Active Stream Panel -->
+                            <div class="noc-stream-panel">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <h4 style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin: 0; letter-spacing: 0.5px;">
+                                        LIVE INCIDENT STREAM
+                                    </h4>
+                                    <span style="font-size: 9px; font-weight: 600; color: var(--accent-success); display: inline-flex; align-items: center; gap: 4px;">
+                                        <span class="noc-pulse-dot" style="background-color: var(--accent-success); animation: pulse-glow 2s infinite ease-in-out;"></span> MONITORING ONLINE
+                                    </span>
+                                </div>
+                                <!-- Active Tickets List -->
+                                <div class="noc-list-container" id="noc-active-infra-list" style="height: 180px; overflow-y: auto;">
+                                    <div class="text-center" style="color: var(--text-muted); padding: 30px 12px;">Memuat tiket aktif...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2. CORPORATE TICKET CARD -->
+                    <div class="form-card" style="padding: 24px;">
+                        <h3 style="font-size: 13px; font-weight: 700; text-align: left; text-transform: uppercase; margin-bottom: 16px; color: var(--accent-secondary); letter-spacing: 0.5px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px;">
+                            <i class="fa-solid fa-building-circle-exclamation"></i> CORPORATE TICKET SUMMARY & INCIDENT STREAM
+                        </h3>
+                        
+                        <div class="noc-grid-card">
+                            <!-- Left: Visual Stats Panel -->
+                            <div class="noc-visual-panel">
+                                <!-- Scorecards (Open, Progress, On Hold) -->
+                                <div class="noc-summary-container">
+                                    <div class="noc-stat-box open">
+                                        <div class="noc-stat-label">Open</div>
+                                        <div class="noc-stat-number" id="noc-corp-open">0</div>
+                                    </div>
+                                    <div class="noc-stat-box progress">
+                                        <div class="noc-stat-label">Progress</div>
+                                        <div class="noc-stat-number" id="noc-corp-progress">0</div>
+                                    </div>
+                                    <div class="noc-stat-box onhold">
+                                        <div class="noc-stat-label">On Hold</div>
+                                        <div class="noc-stat-number" id="noc-corp-onhold">0</div>
+                                    </div>
+                                </div>
+                                
+                                <div style="display: flex; align-items: center; justify-content: space-around; gap: 16px; margin: 15px 0;">
+                                    <!-- Circular Radial Gauge -->
+                                    <div class="noc-radial-wrapper">
+                                        <svg width="100" height="100" viewBox="0 0 100 100">
+                                            <circle cx="50" cy="50" r="42" class="noc-gauge-bg"></circle>
+                                            <circle cx="50" cy="50" r="42" class="noc-gauge-fill" id="noc-corp-gauge-fill" stroke-dasharray="264" stroke-dashoffset="264"></circle>
+                                        </svg>
+                                        <div class="noc-radial-text">
+                                            <span class="num" id="noc-corp-active-count">0</span>
+                                            <span class="lbl">Aktif</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Severity Bar Container -->
+                                    <div style="flex: 1;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px;">
+                                            <span>DIAGRAM KEPARAHAN</span>
+                                            <span id="noc-corp-severity-text">0 Crit / 0 Maj</span>
+                                        </div>
+                                        <div class="severity-progress-bar">
+                                            <div class="severity-seg critical" id="noc-corp-seg-crit" style="width: 0%;"></div>
+                                            <div class="severity-seg major" id="noc-corp-seg-maj" style="width: 0%;"></div>
+                                            <div class="severity-seg minor" id="noc-corp-seg-min" style="width: 0%;"></div>
+                                            <div class="severity-seg low" id="noc-corp-seg-low" style="width: 0%;"></div>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; font-size: 9px; color: var(--text-muted); margin-top: 6px;">
+                                            <span>🔴 Crit</span>
+                                            <span>🟡 Maj</span>
+                                            <span>🟢 Min</span>
+                                            <span>🔵 Low</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Right: Live Active Stream Panel -->
+                            <div class="noc-stream-panel">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <h4 style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-secondary); margin: 0; letter-spacing: 0.5px;">
+                                        LIVE INCIDENT STREAM
+                                    </h4>
+                                    <span style="font-size: 9px; font-weight: 600; color: var(--accent-success); display: inline-flex; align-items: center; gap: 4px;">
+                                        <span class="noc-pulse-dot" style="background-color: var(--accent-success); animation: pulse-glow 2s infinite ease-in-out;"></span> MONITORING ONLINE
+                                    </span>
+                                </div>
+                                <!-- Active Tickets List -->
+                                <div class="noc-list-container" id="noc-active-corp-list" style="height: 180px; overflow-y: auto;">
+                                    <div class="text-center" style="color: var(--text-muted); padding: 30px 12px;">Memuat tiket aktif...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dashboard Section (Shared by Infra and Corporate Tickets) -->
+            <section id="dashboard-section" class="content-section d-none">
+
+
+                <!-- Database Alert Configuration (if not configured yet) -->
+                <div class="alert-box warning-alert" id="config-warning">
+                    <i class="fa-solid fa-circle-info alert-icon"></i>
+                    <div class="alert-content">
+                        <h4>Aplikasi berjalan dalam mode offline</h4>
+                        <p>Menggunakan basis data lokal dari file CSV. Klik ikon roda gigi di pojok kiri bawah untuk menghubungkan Google Sheet secara online.</p>
+                    </div>
+                </div>
+
+                <!-- Horizontal Inline Filter Bar -->
+                <div class="filter-row" id="dashboard-filter-card">
+                    <div class="filter-item">
+                        <label for="filter-dash-start-date">Start Date</label>
+                        <input type="date" id="filter-dash-start-date">
+                    </div>
+                    <div class="filter-item">
+                        <label for="filter-dash-end-date">End Date</label>
+                        <input type="date" id="filter-dash-end-date">
+                    </div>
+                    <div class="filter-item">
+                        <label for="filter-dash-activity">Activity Type</label>
+                        <select id="filter-dash-activity">
+                            <option value="">Semua Tipe</option>
+                            <option value="Incident">Incident</option>
+                            <option value="CM">CM</option>
+                            <option value="Maintenance">Maintenance</option>
+                            <option value="Request">Request</option>
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="filter-dash-vendor" id="label-dash-vendor">Vendor</label>
+                        <select id="filter-dash-vendor">
+                            <option value="">Semua Vendor</option>
+                            <!-- Diisi secara dinamis -->
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="filter-dash-category" id="label-dash-category">Category</label>
+                        <select id="filter-dash-category">
+                            <option value="">Semua Kategori</option>
+                            <!-- Diisi secara dinamis -->
+                        </select>
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn btn-secondary btn-sm" id="btn-reset-dash-filters" title="Reset Filter">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                        <button class="btn btn-primary btn-sm" id="btn-apply-dash-filters">
+                            <span>Terapkan</span>
+                            <i class="fa-solid fa-filter"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tickets Table Container -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 id="table-title">Daftar Tiket</h3>
+                        <div class="table-actions">
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="table-search" placeholder="Cari Ticket ID, Site, Judul...">
+                            </div>
+                            <button class="btn btn-primary btn-sm" id="btn-add-ticket-shortcut">
+                                <i class="fa-solid fa-plus"></i> Tiket Baru
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="tickets-table">
+                            <thead>
+                                <tr>
+                                    <th>Ticket ID</th>
+                                    <th>Title</th>
+                                    <th>Site / POP</th>
+                                    <th>Severity</th>
+                                    <th>Status</th>
+                                    <th>Duration</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tickets-list">
+                                <!-- Data akan di-load lewat JavaScript -->
+                                <tr class="empty-row">
+                                    <td colspan="7" class="text-center">
+                                        <div class="empty-state">
+                                            <i class="fa-solid fa-folder-open"></i>
+                                            <p>Belum ada data tiket.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SLA Dashboard Section (Detailed Corporate SLA reporting) -->
+            <section id="sla-section" class="content-section d-none">
+                <!-- SLA Filter Card -->
+                <!-- Horizontal Inline SLA Filter Bar -->
+                <div class="filter-row">
+                    <div class="filter-item">
+                        <label for="filter-customer-name">Nama Customer</label>
+                        <select id="filter-customer-name">
+                            <option value="">Semua Customer</option>
+                            <!-- Diisi secara dinamis -->
+                        </select>
+                    </div>
+                    <div class="filter-item">
+                        <label for="filter-start-date">Start Date</label>
+                        <input type="date" id="filter-start-date">
+                    </div>
+                    <div class="filter-item">
+                        <label for="filter-end-date">End Date</label>
+                        <input type="date" id="filter-end-date">
+                    </div>
+                    <div class="filter-actions">
+                        <button class="btn btn-secondary btn-sm" id="btn-reset-sla" title="Reset Filter">
+                            <i class="fa-solid fa-rotate-left"></i>
+                        </button>
+                        <button class="btn btn-primary btn-sm" id="btn-apply-sla">
+                            <span>Terapkan</span>
+                            <i class="fa-solid fa-filter"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- SLA Report Table Container -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3>Laporan Durasi Gangguan & Kinerja SLA (Menit)</h3>
+                        <button class="btn btn-secondary btn-sm" id="btn-export-sla-csv" title="Ekspor laporan ke CSV">
+                            <i class="fa-solid fa-file-export"></i> Ekspor CSV
+                        </button>
+                    </div>
+                    <div class="table-wrapper">
+                        <table id="sla-report-table">
+                            <thead>
+                                <tr>
+                                    <th>Customer Name</th>
+                                    <th>Severity</th>
+                                    <th>THC Ticket</th>
+                                    <th>Ticket ID</th>
+                                    <th>Service ID</th>
+                                    <th>Site Name</th>
+                                    <th>Service Type</th>
+                                    <th>Start Time</th>
+                                    <th>End Time</th>
+                                    <th>SLA (Min)</th>
+                                    <th>Root Cause Detail</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sla-tickets-list">
+                                <!-- Data akan di-load lewat JavaScript -->
+                                <tr class="empty-row">
+                                    <td colspan="11" class="text-center">
+                                        <div class="empty-state">
+                                            <i class="fa-solid fa-folder-open"></i>
+                                            <p>Tidak ada data SLA yang sesuai.</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Configuration Section (Hidden by Default) -->
+            <section id="config-section" class="content-section d-none">
+                <div class="form-card">
+                    <div class="form-card-header">
+                        <h3>Konfigurasi Koneksi Google Sheet</h3>
+                        <p>Hubungkan aplikasi dengan Google Sheets Anda melalui Apps Script Web App URL.</p>
+                    </div>
+                    <div class="config-instructions">
+                        <h4>Langkah-Langkah Pengaturan:</h4>
+                        <ol>
+                            <li>Buat Google Spreadsheet baru di Google Drive Anda.</li>
+                            <li>Buka spreadsheet tersebut, lalu masuk ke menu <strong>Extensions (Ekstensi)</strong> > <strong>Apps Script</strong>.</li>
+                            <li>Hapus semua kode bawaan, lalu salin dan tempel isi file <code>google_script.js</code> dari folder proyek ini ke editor Apps Script.</li>
+                            <li>Klik tombol <strong>Save (Simpan)</strong> (ikon disket).</li>
+                            <li>Klik tombol <strong>Deploy</strong> > <strong>New deployment</strong> di bagian kanan atas editor.</li>
+                            <li>Pilih type: <strong>Web app</strong>. Setel opsi berikut:
+                                <ul>
+                                    <li><strong>Execute as:</strong> <code>Me (Email Anda)</code></li>
+                                    <li><strong>Who has access:</strong> <code>Anyone</code></li>
+                                </ul>
+                            </li>
+                            <li>Klik <strong>Deploy</strong>. Berikan izin akses Google jika diminta.</li>
+                            <li>Salin <strong>Web App URL</strong> yang dihasilkan (berawalan <code>https://script.google.com/macros/s/...</code>).</li>
+                            <li>Tempel URL tersebut di form bawah ini dan klik <strong>Hubungkan</strong>.</li>
+                        </ol>
+                    </div>
+
+                    <div class="config-form-wrapper">
+                        <div class="form-control">
+                            <label for="input-web-app-url">Google Apps Script Web App URL</label>
+                            <div class="input-with-icon">
+                                <i class="fa-solid fa-network-wired"></i>
+                                <input type="url" id="input-web-app-url" placeholder="https://script.google.com/macros/s/...">
+                            </div>
+                        </div>
+                        <div class="config-actions mt-3">
+                            <button class="btn btn-primary" id="btn-save-config">
+                                <span>Hubungkan Database</span>
+                                <i class="fa-solid fa-link"></i>
+                            </button>
+                            <button class="btn btn-warning-outline ms-2" id="btn-use-mock">
+                                <span>Gunakan Mock Data (Uji Coba Luring)</span>
+                                <i class="fa-solid fa-vial"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Database Customer Section (Hidden by Default) -->
+            <section id="customer-section" class="content-section d-none">
+                <div class="table-container">
+                    <div class="table-header-bar">
+                        <div class="header-left">
+                            <h3 id="customer-table-title">Daftar Pelanggan Master</h3>
+                        </div>
+                        <div class="header-actions">
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="customer-search" placeholder="Cari nama atau ID customer...">
+                            </div>
+                            <button class="btn btn-secondary-outline" id="btn-refresh-customers" title="Refresh Data" style="padding: 10px 14px; border: 1px solid var(--border-color); border-radius: var(--border-radius); background: var(--bg-primary); color: var(--text-primary); cursor: pointer;">
+                                <i class="fa-solid fa-rotate"></i>
+                            </button>
+                            <button class="btn btn-primary" id="btn-add-customer">
+                                <span>Customer Baru</span>
+                                <i class="fa-solid fa-user-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="customer-table">
+                            <thead>
+                                <tr>
+                                    <th>Customer ID</th>
+                                    <th>Customer Name</th>
+                                    <th>Segment</th>
+                                    <th>PIC Name</th>
+                                    <th>PIC Contact</th>
+                                    <th>Address</th>
+                                    <th>Status</th>
+                                    <th>Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="customer-list">
+                                <!-- Terisi dinamis dari app.js -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Executive Dashboard - INFRA Ticket Section -->
+            <section id="exec-infra-section" class="content-section d-none">
+                <!-- Header & Reporting Period Filter Bar -->
+                <div class="exec-dashboard-header">
+                    <div class="exec-header-info">
+                        <div class="exec-pill-badge"><i class="fa-solid fa-network-wired"></i> INFRA TICKET</div>
+                        <h2 class="exec-title">EXECUTIVE DASHBOARD</h2>
+                        <p class="exec-subtitle">Ringkasan Operasional & Kinerja SLA Mingguan</p>
+                    </div>
+                    <div class="exec-filter-bar">
+                        <div class="exec-date-inputs">
+                            <div class="exec-filter-group">
+                                <label for="exec-filter-start-date">Start Date</label>
+                                <input type="date" id="exec-filter-start-date" class="form-input">
+                            </div>
+                            <div class="exec-filter-group">
+                                <label for="exec-filter-end-date">End Date</label>
+                                <input type="date" id="exec-filter-end-date" class="form-input">
+                            </div>
+                        </div>
+                        <div class="exec-filter-buttons">
+                            <button class="btn btn-primary" id="btn-exec-apply">
+                                <i class="fa-solid fa-check"></i> APPLY
+                            </button>
+                            <button class="btn btn-secondary-outline" id="btn-exec-reset" title="Kembalikan Periode Default">
+                                <i class="fa-solid fa-rotate-left"></i> RESET
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Executive Reporting Period Status Pill -->
+                <div class="exec-period-banner">
+                    <span class="banner-icon"><i class="fa-regular fa-calendar-check"></i></span>
+                    <span class="banner-text">Periode Pelaporan: <strong id="exec-period-display">-- --- ---- s/d -- --- ----</strong></span>
+                </div>
+
+                <!-- Executive KPI Cards Section (Max 5 KPI Cards) -->
+                <div class="exec-kpi-grid">
+                    <!-- 1. TOTAL TICKET -->
+                    <div class="exec-kpi-card total">
+                        <div class="kpi-header">
+                            <span class="kpi-title">TOTAL TICKET</span>
+                            <span class="kpi-icon"><i class="fa-solid fa-ticket"></i></span>
+                        </div>
+                        <div class="kpi-val" id="exec-kpi-total">0</div>
+                        <div class="kpi-foot" id="exec-kpi-total-foot">Total tiket dalam periode</div>
+                    </div>
+
+                    <!-- 2. RESOLVED -->
+                    <div class="exec-kpi-card resolved">
+                        <div class="kpi-header">
+                            <span class="kpi-title">RESOLVED</span>
+                            <span class="kpi-icon"><i class="fa-solid fa-circle-check"></i></span>
+                        </div>
+                        <div class="kpi-val" id="exec-kpi-resolved">0</div>
+                        <div class="kpi-foot" id="exec-kpi-resolved-foot">0% dari total tiket</div>
+                    </div>
+
+                    <!-- 3. OPEN -->
+                    <div class="exec-kpi-card open">
+                        <div class="kpi-header">
+                            <span class="kpi-title">OPEN</span>
+                            <span class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                        </div>
+                        <div class="kpi-val" id="exec-kpi-open">0</div>
+                        <div class="kpi-foot" id="exec-kpi-open-foot">Tiket aktif dalam penanganan</div>
+                    </div>
+
+                    <!-- 4. CRITICAL -->
+                    <div class="exec-kpi-card critical">
+                        <div class="kpi-header">
+                            <span class="kpi-title">CRITICAL</span>
+                            <span class="kpi-icon"><i class="fa-solid fa-fire"></i></span>
+                        </div>
+                        <div class="kpi-val" id="exec-kpi-critical">0</div>
+                        <div class="kpi-foot" id="exec-kpi-critical-foot">Severity Critical</div>
+                    </div>
+
+                    <!-- 5. SLA COMPLIANCE -->
+                    <div class="exec-kpi-card sla">
+                        <div class="kpi-header">
+                            <span class="kpi-title">SLA COMPLIANCE</span>
+                            <span class="kpi-icon"><i class="fa-solid fa-shield-halved"></i></span>
+                        </div>
+                        <div class="kpi-val" id="exec-kpi-sla">0.0%</div>
+                        <div class="kpi-foot" id="exec-kpi-sla-foot">0 Met / 0 Breach (&le; 4 Jam)</div>
+                    </div>
+                </div>
+
+                <!-- Main Analysis Charts -->
+                <div class="exec-charts-container">
+                    <!-- 7. TICKET TREND (Daily Line Chart) -->
+                    <div class="exec-card exec-chart-full">
+                        <div class="exec-card-header">
+                            <div class="chart-heading">
+                                <h3 class="chart-main-title"><i class="fa-solid fa-chart-line"></i> TICKET TREND</h3>
+                                <p class="chart-sub-title">Jumlah tiket INFRA harian selama rentang tanggal terpilih</p>
+                            </div>
+                        </div>
+                        <div class="chart-canvas-wrapper" style="height: 270px; position: relative;">
+                            <canvas id="exec-chart-trend"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 8, 9, 10: TICKET CATEGORY, SLA PERFORMANCE, ROOT CAUSE (Single Row - 3 Columns) -->
+                    <div class="exec-grid-3col">
+                        <!-- TICKET CATEGORY (Bar Chart) -->
+                        <div class="exec-card">
+                            <div class="exec-card-header">
+                                <div class="chart-heading">
+                                    <h3 class="chart-main-title"><i class="fa-solid fa-chart-column"></i> TICKET CATEGORY</h3>
+                                    <p class="chart-sub-title">Jumlah insiden berdasarkan kategori infrastruktur</p>
+                                </div>
+                            </div>
+                            <div class="chart-canvas-wrapper" style="height: 260px; position: relative;">
+                                <canvas id="exec-chart-category"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- SLA PERFORMANCE (Donut Chart) -->
+                        <div class="exec-card">
+                            <div class="exec-card-header">
+                                <div class="chart-heading">
+                                    <h3 class="chart-main-title"><i class="fa-solid fa-chart-pie"></i> SLA PERFORMANCE</h3>
+                                    <p class="chart-sub-title">Pemenuhan target resolusi insiden (&le; 4 Jam)</p>
+                                </div>
+                            </div>
+                            <div class="chart-canvas-wrapper donut-layout" style="height: 260px; position: relative; display: flex; align-items: center; justify-content: center; gap: 16px;">
+                                <div style="width: 165px; height: 165px; position: relative; flex-shrink: 0;">
+                                    <canvas id="exec-chart-sla"></canvas>
+                                    <div class="donut-center-label">
+                                        <span class="donut-rate" id="exec-donut-sla-val">0%</span>
+                                        <span class="donut-desc">COMPLIANCE</span>
+                                    </div>
+                                </div>
+                                <div class="donut-legend-box" id="exec-donut-sla-legend">
+                                    <div class="d-legend-item met">
+                                        <span class="legend-indicator"></span>
+                                        <div class="legend-details">
+                                            <span class="name">SLA Met</span>
+                                            <strong class="count" id="exec-sla-met-cnt">0 Tiket</strong>
+                                        </div>
+                                    </div>
+                                    <div class="d-legend-item breach">
+                                        <span class="legend-indicator"></span>
+                                        <div class="legend-details">
+                                            <span class="name">SLA Breach</span>
+                                            <strong class="count" id="exec-sla-breach-cnt">0 Tiket</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ROOT CAUSE (Donut Chart) -->
+                        <div class="exec-card">
+                            <div class="exec-card-header">
+                                <div class="chart-heading">
+                                    <h3 class="chart-main-title"><i class="fa-solid fa-circle-nodes"></i> ROOT CAUSE</h3>
+                                    <p class="chart-sub-title">Distribusi insiden berdasarkan Root Cause L1</p>
+                                </div>
+                            </div>
+                            <div class="chart-canvas-wrapper" style="height: 260px; position: relative;">
+                                <canvas id="exec-chart-rootcause"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 12 & 13. TICKET DETAIL TABLE -->
+                <div class="exec-card exec-table-card">
+                    <div class="exec-table-header-bar">
+                        <div class="header-left">
+                            <h3 id="exec-table-summary-title">TICKET DETAIL — 0 TICKETS</h3>
+                            <p id="exec-table-summary-sub">Showing tickets from -- --- ---- to -- --- ----</p>
+                        </div>
+                        <div class="header-actions">
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="exec-table-search" placeholder="Cari ID, Site, Kategori, atau Root Cause...">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table-styled" id="exec-tickets-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="Ticket ID">Ticket ID <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Start Time">Start Time <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Site / POP">Site / POP <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Infra Category">Infra Category <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Activity Type">Activity Type <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Severity">Severity <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Status">Status <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Actual Duration">Actual Duration <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="SLA Duration">SLA Duration <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Root Cause L1">Root Cause L1 <i class="fa-solid fa-sort"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="exec-tickets-list">
+                                <!-- Terisi dinamis -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="exec-table-pagination">
+                        <div class="pagination-info" id="exec-pagination-info">Menampilkan 0 dari 0 tiket</div>
+                        <div class="pagination-controls">
+                            <button class="btn btn-sm btn-secondary-outline" id="btn-exec-prev"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                            <span class="current-page-badge" id="exec-page-num">1</span>
+                            <button class="btn btn-sm btn-secondary-outline" id="btn-exec-next">Next <i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Executive Dashboard - Corporate Ticket Section -->
+            <section id="exec-corp-section" class="content-section d-none">
+                <!-- Header & Reporting Period Filter Bar -->
+                <div class="exec-dashboard-header">
+                    <div class="exec-header-info">
+                        <div class="exec-pill-badge"><i class="fa-solid fa-building"></i> CORPORATE TICKET</div>
+                        <h2 class="exec-title">EXECUTIVE DASHBOARD</h2>
+                        <p class="exec-subtitle">Ringkasan Operasional & Kinerja SLA Mingguan</p>
+                    </div>
+                    <div class="exec-filter-bar">
+                        <div class="exec-date-inputs">
+                            <div class="exec-filter-group">
+                                <label for="exec-corp-filter-start-date">Start Date</label>
+                                <input type="date" id="exec-corp-filter-start-date" class="form-input">
+                            </div>
+                            <div class="exec-filter-group">
+                                <label for="exec-corp-filter-end-date">End Date</label>
+                                <input type="date" id="exec-corp-filter-end-date" class="form-input">
+                            </div>
+                        </div>
+                        <div class="exec-filter-buttons">
+                            <button class="btn btn-primary" id="btn-exec-corp-apply">
+                                <i class="fa-solid fa-check"></i> APPLY
+                            </button>
+                            <button class="btn btn-secondary-outline" id="btn-exec-corp-reset" title="Kembalikan Periode Default">
+                                <i class="fa-solid fa-rotate-left"></i> RESET
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Executive Reporting Period Status Pill -->
+                <div class="exec-period-banner">
+                    <span class="banner-icon"><i class="fa-regular fa-calendar-check"></i></span>
+                    <span class="banner-text">Periode Pelaporan: <strong id="exec-corp-period-display">-- --- ---- s/d -- --- ----</strong></span>
+                </div>
+
+                <!-- Executive KPI Cards Section (Max 5 KPI Cards) -->
+                <div class="exec-kpi-grid">
+                    <!-- 1. TOTAL TICKET -->
+                    <div class="exec-kpi-card total">
+                        <div class="kpi-header">
+                            <span class="kpi-title">TOTAL TICKET</span>
+                            <span class="kpi-icon"><i class="fa-solid fa-ticket"></i></span>
+                        </div>
+                        <div class="kpi-val" id="exec-corp-kpi-total">0</div>
+                        <div class="kpi-foot" id="exec-corp-kpi-total-foot">Total tiket dalam periode</div>
+                    </div>
+
+                    <!-- 2. RESOLVED -->
+                    <div class="exec-kpi-card resolved">
+                        <div class="kpi-header">
+                            <span class="kpi-title">RESOLVED</span>
+                            <span class="kpi-icon"><i class="fa-solid fa-circle-check"></i></span>
+                        </div>
+                        <div class="kpi-val" id="exec-corp-kpi-resolved">0</div>
+                        <div class="kpi-foot" id="exec-corp-kpi-resolved-foot">0% dari total tiket</div>
+                    </div>
+
+                    <!-- 3. OPEN -->
+                    <div class="exec-kpi-card open">
+                        <div class="kpi-header">
+                            <span class="kpi-title">OPEN</span>
+                            <span class="kpi-icon"><i class="fa-solid fa-triangle-exclamation"></i></span>
+                        </div>
+                        <div class="kpi-val" id="exec-corp-kpi-open">0</div>
+                        <div class="kpi-foot" id="exec-corp-kpi-open-foot">Tiket aktif dalam penanganan</div>
+                    </div>
+
+                    <!-- 4. CRITICAL -->
+                    <div class="exec-kpi-card critical">
+                        <div class="kpi-header">
+                            <span class="kpi-title">CRITICAL</span>
+                            <span class="kpi-icon"><i class="fa-solid fa-fire"></i></span>
+                        </div>
+                        <div class="kpi-val" id="exec-corp-kpi-critical">0</div>
+                        <div class="kpi-foot" id="exec-corp-kpi-critical-foot">Severity Critical</div>
+                    </div>
+
+                    <!-- 5. SLA COMPLIANCE -->
+                    <div class="exec-kpi-card sla">
+                        <div class="kpi-header">
+                            <span class="kpi-title">SLA COMPLIANCE</span>
+                            <span class="kpi-icon"><i class="fa-solid fa-shield-halved"></i></span>
+                        </div>
+                        <div class="kpi-val" id="exec-corp-kpi-sla">0.0%</div>
+                        <div class="kpi-foot" id="exec-corp-kpi-sla-foot">0 Met / 0 Breach (&le; 4 Jam)</div>
+                    </div>
+                </div>
+
+                <!-- Main Analysis Charts -->
+                <div class="exec-charts-container">
+                    <!-- 7. TICKET TREND (Daily Line Chart) -->
+                    <div class="exec-card exec-chart-full">
+                        <div class="exec-card-header">
+                            <div class="chart-heading">
+                                <h3 class="chart-main-title"><i class="fa-solid fa-chart-line"></i> TICKET TREND</h3>
+                                <p class="chart-sub-title">Jumlah tiket Corporate harian selama rentang tanggal terpilih</p>
+                            </div>
+                        </div>
+                        <div class="chart-canvas-wrapper" style="height: 270px; position: relative;">
+                            <canvas id="exec-corp-chart-trend"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- 8, 9, 10: SERVICE TYPE, SLA PERFORMANCE, ROOT CAUSE (Single Row - 3 Columns) -->
+                    <div class="exec-grid-3col">
+                        <!-- SERVICE TYPE (Bar Chart) -->
+                        <div class="exec-card">
+                            <div class="exec-card-header">
+                                <div class="chart-heading">
+                                    <h3 class="chart-main-title"><i class="fa-solid fa-chart-column"></i> SERVICE TYPE</h3>
+                                    <p class="chart-sub-title">Jumlah insiden berdasarkan tipe layanan</p>
+                                </div>
+                            </div>
+                            <div class="chart-canvas-wrapper" style="height: 260px; position: relative;">
+                                <canvas id="exec-corp-chart-category"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- SLA PERFORMANCE (Donut Chart) -->
+                        <div class="exec-card">
+                            <div class="exec-card-header">
+                                <div class="chart-heading">
+                                    <h3 class="chart-main-title"><i class="fa-solid fa-chart-pie"></i> SLA PERFORMANCE</h3>
+                                    <p class="chart-sub-title">Pemenuhan target resolusi insiden (&le; 4 Jam)</p>
+                                </div>
+                            </div>
+                            <div class="chart-canvas-wrapper donut-layout" style="height: 260px; position: relative; display: flex; align-items: center; justify-content: center; gap: 16px;">
+                                <div style="width: 165px; height: 165px; position: relative; flex-shrink: 0;">
+                                    <canvas id="exec-corp-chart-sla"></canvas>
+                                    <div class="donut-center-label">
+                                        <span class="donut-rate" id="exec-corp-donut-sla-val">0%</span>
+                                        <span class="donut-desc">COMPLIANCE</span>
+                                    </div>
+                                </div>
+                                <div class="donut-legend-box" id="exec-corp-donut-sla-legend">
+                                    <div class="d-legend-item met">
+                                        <span class="legend-indicator"></span>
+                                        <div class="legend-details">
+                                            <span class="name">SLA Met</span>
+                                            <strong class="count" id="exec-corp-sla-met-cnt">0 Tiket</strong>
+                                        </div>
+                                    </div>
+                                    <div class="d-legend-item breach">
+                                        <span class="legend-indicator"></span>
+                                        <div class="legend-details">
+                                            <span class="name">SLA Breach</span>
+                                            <strong class="count" id="exec-corp-sla-breach-cnt">0 Tiket</strong>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- ROOT CAUSE (Donut Chart) -->
+                        <div class="exec-card">
+                            <div class="exec-card-header">
+                                <div class="chart-heading">
+                                    <h3 class="chart-main-title"><i class="fa-solid fa-circle-nodes"></i> ROOT CAUSE</h3>
+                                    <p class="chart-sub-title">Distribusi insiden berdasarkan Root Cause L1</p>
+                                </div>
+                            </div>
+                            <div class="chart-canvas-wrapper" style="height: 260px; position: relative;">
+                                <canvas id="exec-corp-chart-rootcause"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 12 & 13. TICKET DETAIL TABLE -->
+                <div class="exec-card exec-table-card">
+                    <div class="exec-table-header-bar">
+                        <div class="header-left">
+                            <h3 id="exec-corp-table-summary-title">TICKET DETAIL — 0 TICKETS</h3>
+                            <p id="exec-corp-table-summary-sub">Showing tickets from -- --- ---- to -- --- ----</p>
+                        </div>
+                        <div class="header-actions">
+                            <div class="search-box">
+                                <i class="fa-solid fa-magnifying-glass"></i>
+                                <input type="text" id="exec-corp-table-search" placeholder="Cari ID, Customer, Service, atau Root Cause...">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table-styled" id="exec-corp-tickets-table">
+                            <thead>
+                                <tr>
+                                    <th data-sort="Ticket ID">Ticket ID <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Start Time">Start Time <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Customer Name">Customer Name <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Service ID">Service ID <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Service Type">Service Type <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Severity">Severity <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Status">Status <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Actual Duration">Actual Duration <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="SLA Duration">SLA Duration <i class="fa-solid fa-sort"></i></th>
+                                    <th data-sort="Root Cause L1">Root Cause L1 <i class="fa-solid fa-sort"></i></th>
+                                </tr>
+                            </thead>
+                            <tbody id="exec-corp-tickets-list">
+                                <!-- Terisi dinamis -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="exec-table-pagination">
+                        <div class="pagination-info" id="exec-corp-pagination-info">Menampilkan 0 dari 0 tiket</div>
+                        <div class="pagination-controls">
+                            <button class="btn btn-sm btn-secondary-outline" id="btn-exec-corp-prev"><i class="fa-solid fa-chevron-left"></i> Prev</button>
+                            <span class="current-page-badge" id="exec-corp-page-num">1</span>
+                            <button class="btn btn-sm btn-secondary-outline" id="btn-exec-corp-next">Next <i class="fa-solid fa-chevron-right"></i></button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Right Sliding Side Drawer overlay -->
+        <div class="drawer-overlay d-none" id="drawer-overlay"></div>
+
+        <!-- Right Sliding Side Drawer (Contains Detail view OR Form view) -->
+        <aside class="drawer" id="form-drawer">
+            <!-- Header (Dynamic) -->
+            <div class="drawer-header">
+                <h3 id="drawer-title-text">Detail Tiket Insiden</h3>
+                <div class="drawer-header-actions">
+                    <!-- Edit Button inside Detail Mode -->
+                    <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-ticket-drawer" title="Edit Data Tiket">
+                        <i class="fa-solid fa-pen-to-square"></i> Edit
+                    </button>
+                    <button type="button" class="btn-close-drawer" id="btn-close-drawer">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Drawer Body -->
+            <div class="drawer-body">
+                
+                <!-- 1. READ-ONLY TICKET DETAIL VIEW -->
+                <div id="drawer-detail-view" class="drawer-content">
+                    <div class="detail-hero mb-3" style="background: var(--grad-primary); padding: 20px; border-radius: var(--radius-md); color: #fff;">
+                        <span class="text-mono" id="detail-ticket-id" style="font-weight: 700; font-size: 16px; letter-spacing: 0.5px; opacity: 0.95;">INFRA-096</span>
+                        <h2 id="detail-title" style="font-size: 18px; font-weight: 600; margin-top: 4px; line-height: 1.4;">POP Sui Duri Power Down</h2>
+                    </div>
+
+                    <!-- Meta Quick Specs Grid -->
+                    <div class="form-grid-3 mb-3">
+                        <div class="detail-spec-card">
+                            <span class="spec-label">Status</span>
+                            <span class="badge" id="detail-status">Resolved</span>
+                        </div>
+                        <div class="detail-spec-card">
+                            <span class="spec-label">Severity</span>
+                            <span class="badge" id="detail-severity">Critical</span>
+                        </div>
+                        <div class="detail-spec-card">
+                            <span class="spec-label" id="detail-category-label">Category</span>
+                            <span id="detail-category" style="font-weight: 600;">Power</span>
+                        </div>
+                    </div>
+
+                    <!-- Section Group 1: General Info -->
+                    <div class="detail-section-group mb-3">
+                        <h4 class="detail-group-title"><i class="fa-solid fa-tag"></i> Klasifikasi & Tiket Eksternal</h4>
+                        <table class="detail-info-table">
+                            <tr>
+                                <th>THC Ticket</th>
+                                <td id="detail-thc-ticket">-</td>
+                            </tr>
+                            <tr>
+                                <th>Vendor Ticket</th>
+                                <td id="detail-vendor-ticket">-</td>
+                            </tr>
+                            <tr>
+                                <th>Activity Type</th>
+                                <td id="detail-activity-type">Incident</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Section Group 2: Location & Link Details -->
+                    <div class="detail-section-group mb-3">
+                        <h4 class="detail-group-title" id="detail-location-group-title"><i class="fa-solid fa-circle-info"></i> Detail Status & Lokasi</h4>
+                        <table class="detail-info-table">
+                            <tr id="detail-row-customer-name" class="d-none">
+                                <th>Customer Name</th>
+                                <td id="detail-customer-name">-</td>
+                            </tr>
+                            <tr>
+                                <th id="detail-vendor-label">Vendor</th>
+                                <td id="detail-vendor">Internal</td>
+                            </tr>
+                            <tr>
+                                <th id="detail-site-label">Site / POP</th>
+                                <td id="detail-site-pop">Sui Duri</td>
+                            </tr>
+                            <tr>
+                                <th id="detail-link-label">Link / Device</th>
+                                <td id="detail-link-device">POP Sui Duri Down</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Section Group 3: Duration & Timeline -->
+                    <div class="detail-section-group mb-3">
+                        <h4 class="detail-group-title"><i class="fa-solid fa-clock"></i> Durasi & SLA</h4>
+                        <table class="detail-info-table">
+                            <tr>
+                                <th>Start Time</th>
+                                <td id="detail-start-time" class="text-mono">08/07/2026 6:08</td>
+                            </tr>
+                            <tr>
+                                <th>End Time</th>
+                                <td id="detail-end-time" class="text-mono">08/07/2026 6:24</td>
+                            </tr>
+                            <tr>
+                                <th>On Hold Duration</th>
+                                <td id="detail-on-hold-duration" class="text-mono">-</td>
+                            </tr>
+                            <tr>
+                                <th>Actual Duration</th>
+                                <td id="detail-actual-duration" class="text-mono" style="font-weight:700; color: var(--accent-secondary);">00 Jam : 16 Menit</td>
+                            </tr>
+                            <tr>
+                                <th>SLA Duration</th>
+                                <td id="detail-sla-duration" class="text-mono" style="font-weight:700; color: var(--accent-secondary);">00 Jam : 16 Menit</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Section Group 4: Root Cause & Actions -->
+                    <div class="detail-section-group mb-3">
+                        <h4 class="detail-group-title"><i class="fa-solid fa-magnifying-glass-chart"></i> Analisis & Tindakan</h4>
+                        <table class="detail-info-table">
+                            <tr>
+                                <th>Root Cause L1</th>
+                                <td id="detail-root-cause-l1">Power</td>
+                            </tr>
+                            <tr>
+                                <th>Root Cause L2</th>
+                                <td id="detail-root-cause-l2">PLN Padam</td>
+                            </tr>
+                            <tr>
+                                <th>Detail Root Cause</th>
+                                <td><p id="detail-root-cause-detail" style="white-space: pre-wrap;">Link down impact PLN down</p></td>
+                            </tr>
+                            <tr>
+                                <th>Action (Perbaikan)</th>
+                                <td><p id="detail-action" style="white-space: pre-wrap; font-weight: 500; color: var(--text-primary);">normal after the power comes back on</p></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <!-- Section Group 5: Ownership & Attachments -->
+                    <div class="detail-section-group mb-3">
+                        <h4 class="detail-group-title"><i class="fa-solid fa-user-gear"></i> Pelaporan & Dokumen</h4>
+                        <table class="detail-info-table">
+                            <tr>
+                                <th>Created By</th>
+                                <td id="detail-created-by">-</td>
+                            </tr>
+                            <tr>
+                                <th>Closed By</th>
+                                <td id="detail-closed-by">-</td>
+                            </tr>
+                            <tr>
+                                <th>Timeline Docs</th>
+                                <td><a href="#" id="detail-timeline-docs" target="_blank" class="detail-link"><i class="fa-solid fa-up-right-from-square"></i> Buka Lampiran</a></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 2. EDITABLE FORM VIEW (Hidden by default, toggled via JavaScript) -->
+                <div id="drawer-form-view" class="drawer-content d-none">
+                    <form id="ticket-form" novalidate>
+                        <!-- Section 1: Ticket Info -->
+                        <div class="form-section-group">
+                            <h4 class="group-title"><i class="fa-solid fa-tag"></i> 1. Klasifikasi Tiket</h4>
+                            <div class="form-control mb-3">
+                                <label for="input-ticket-id">Ticket ID <span class="required">*</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fa-solid fa-id-card"></i>
+                                    <input type="text" id="input-ticket-id" name="Ticket ID" placeholder="Contoh: INFRA-096" required>
+                                </div>
+                                <span class="error-msg">Ticket ID harus diisi.</span>
+                            </div>
+                            <div class="form-grid-2 mb-3">
+                                <div class="form-control">
+                                    <label for="input-thc-ticket">THC Ticket</label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-ticket-simple"></i>
+                                        <input type="text" id="input-thc-ticket" name="THC Ticket" placeholder="Nomor Tiket THC">
+                                    </div>
+                                </div>
+                                <div class="form-control">
+                                    <label for="input-vendor-ticket">Vendor Ticket</label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-receipt"></i>
+                                        <input type="text" id="input-vendor-ticket" name="Vendor Ticket" placeholder="Nomor Tiket Vendor">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-grid-3">
+                                <div class="form-control">
+                                    <label for="input-infra-category" id="label-infra-category">Category <span class="required">*</span></label>
+                                    <select id="input-infra-category" name="Infra Category" required>
+                                        <option value="" disabled selected>Pilih Kategori</option>
+                                        <option value="Power">Power</option>
+                                        <option value="Fiber Cut">Fiber Cut</option>
+                                        <option value="Hardware">Hardware</option>
+                                        <option value="Logic / System">Logic / System</option>
+                                        <option value="Link Down">Link Down</option>
+                                        <option value="Force Majeure">Force Majeure</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    <span class="error-msg">Pilih salah satu kategori.</span>
+                                </div>
+                                <div class="form-control">
+                                    <label for="input-activity-type">Type <span class="required">*</span></label>
+                                    <select id="input-activity-type" name="Activity Type" required>
+                                        <option value="" disabled selected>Pilih Tipe</option>
+                                        <option value="Incident">Incident</option>
+                                        <option value="CM">CM</option>
+                                        <option value="Maintenance">Maintenance</option>
+                                        <option value="Request">Request</option>
+                                    </select>
+                                    <span class="error-msg">Pilih tipe aktivitas.</span>
+                                </div>
+                                <div class="form-control">
+                                    <label for="input-severity">Severity <span class="required">*</span></label>
+                                    <select id="input-severity" name="Severity" required>
+                                        <option value="" disabled selected>Pilih Severity</option>
+                                        <option value="Critical">Critical</option>
+                                        <option value="Major">Major</option>
+                                        <option value="Minor">Minor</option>
+                                        <option value="Low">Low</option>
+                                    </select>
+                                    <span class="error-msg">Pilih tingkat keparahan.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 2: Details -->
+                        <div class="form-section-group">
+                            <h4 class="group-title" id="form-location-group-title"><i class="fa-solid fa-circle-info"></i> 2. Status & Lokasi</h4>
+                            <div class="form-grid-2 mb-3">
+                                <div class="form-control">
+                                    <label for="input-status">Status <span class="required">*</span></label>
+                                    <select id="input-status" name="Status" required>
+                                        <option value="" disabled selected>Pilih Status</option>
+                                        <option value="Open">Open</option>
+                                        <option value="In Progress">In Progress</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Resolved">Resolved</option>
+                                        <option value="Closed">Closed</option>
+                                    </select>
+                                    <span class="error-msg">Pilih status tiket saat ini.</span>
+                                </div>
+                                <div class="form-control d-none" id="form-group-customer-name">
+                                     <label for="input-customer-name-field">Customer Name <span class="required">*</span></label>
+                                     <div class="input-with-icon">
+                                         <i class="fa-solid fa-user-tie"></i>
+                                         <input type="text" id="input-customer-name-field" name="Customer Name" placeholder="Pilih atau ketik nama customer" list="form-customer-suggestions">
+                                     </div>
+                                     <datalist id="form-customer-suggestions"></datalist>
+                                     <span class="error-msg">Customer Name harus diisi.</span>
+                                 </div>
+                                 <div class="form-control">
+                                      <label for="input-vendor" id="label-vendor">Vendor</label>
+                                      <div class="input-with-icon">
+                                          <i class="fa-solid fa-building-flag" id="icon-vendor"></i>
+                                          <input type="text" id="input-vendor" name="Vendor" placeholder="Contoh: Internal, PLN, Telkom" list="vendor-list-suggestions">
+                                      </div>
+                                      <datalist id="vendor-list-suggestions"></datalist>
+                                  </div>
+                            </div>
+                            <div class="form-control mb-3">
+                                <label for="input-site-pop" id="label-site-pop">Site / POP <span class="required">*</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fa-solid fa-map-pin"></i>
+                                    <input type="text" id="input-site-pop" name="Site / POP" placeholder="Contoh: Site A, Gedung B" required>
+                                </div>
+                                <span class="error-msg">Site / POP harus diisi.</span>
+                            </div>
+                            <div class="form-control mb-3">
+                                <label for="input-link-device" id="label-link-device">Link / Device <span class="required">*</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fa-solid fa-network-wired"></i>
+                                    <input type="text" id="input-link-device" name="Link / Device" placeholder="Contoh: Metro Link Jakarta" required>
+                                </div>
+                                <span class="error-msg">Link atau perangkat terdampak harus diisi.</span>
+                            </div>
+                            <div class="form-control">
+                                <label for="input-title">Title (Ringkasan Masalah) <span class="required">*</span></label>
+                                <div class="input-with-icon">
+                                    <i class="fa-solid fa-heading"></i>
+                                    <input type="text" id="input-title" name="Title" placeholder="Contoh: Ringkasan masalah insiden" required>
+                                </div>
+                                <span class="error-msg">Judul ringkas insiden harus diisi.</span>
+                            </div>
+                        </div>
+
+                        <!-- Section 3: Timeline & SLA -->
+                        <div class="form-section-group">
+                            <h4 class="group-title"><i class="fa-solid fa-clock"></i> 3. Durasi & SLA (Kalkulasi Otomatis)</h4>
+                            <div class="form-grid-2 mb-3">
+                                <div class="form-control">
+                                    <label for="input-start-time">Start Time <span class="required">*</span></label>
+                                    <input type="datetime-local" id="input-start-time" name="Start Time" required>
+                                    <span class="error-msg">Waktu mulai kejadian harus diisi.</span>
+                                </div>
+                                <div class="form-control">
+                                    <label for="input-end-time">End Time</label>
+                                    <input type="datetime-local" id="input-end-time" name="End Time">
+                                </div>
+                            </div>
+                            <div class="form-control mb-3">
+                                <label for="input-on-hold-duration">On Hold Duration</label>
+                                <div class="input-with-icon">
+                                    <i class="fa-solid fa-pause"></i>
+                                    <input type="text" id="input-on-hold-duration" name="On Hold Duration" placeholder="Contoh: 00 Jam : 05 Menit">
+                                </div>
+                            </div>
+                            <div class="form-grid-2">
+                                <div class="form-control bg-calc">
+                                    <label for="input-actual-duration">Actual Duration</label>
+                                    <input type="text" id="input-actual-duration" name="Actual Duration" placeholder="Otomatis" readonly class="readonly-input">
+                                </div>
+                                <div class="form-control bg-calc">
+                                    <label for="input-sla-duration">SLA Duration</label>
+                                    <input type="text" id="input-sla-duration" name="SLA Duration" placeholder="Otomatis" readonly class="readonly-input">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 4: Analysis & Actions -->
+                        <div class="form-section-group">
+                            <h4 class="group-title"><i class="fa-solid fa-magnifying-glass-chart"></i> 4. Analisis & Tindakan</h4>
+                            <div class="form-grid-2 mb-3">
+                                <div class="form-control">
+                                    <label for="input-root-cause-l1">Root Cause L1 <span class="required">*</span></label>
+                                    <select id="input-root-cause-l1" name="Root Cause L1" required>
+                                        <option value="" disabled selected>Pilih Root Cause L1</option>
+                                        <option value="Power">Power</option>
+                                        <option value="Fiber">Fiber</option>
+                                        <option value="Transmission">Transmission</option>
+                                        <option value="Hardware">Hardware</option>
+                                        <option value="Software">Software</option>
+                                        <option value="Logic">Logic</option>
+                                        <option value="Unknown">Unknown</option>
+                                    </select>
+                                    <span class="error-msg">Pilih Root Cause L1.</span>
+                                </div>
+                                <div class="form-control">
+                                    <label for="input-root-cause-l2">Root Cause L2 <span class="required">*</span></label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-code-fork"></i>
+                                        <input type="text" id="input-root-cause-l2" name="Root Cause L2" placeholder="Contoh: PLN Padam, Kabel Putus" required>
+                                    </div>
+                                    <span class="error-msg">Root Cause L2 harus diisi.</span>
+                                </div>
+                            </div>
+                            <div class="form-control mb-3">
+                                <label for="input-root-cause-detail">Root Cause Detail</label>
+                                <textarea id="input-root-cause-detail" name="Root Cause Detail" rows="3" placeholder="Deskripsikan detail akar masalah..."></textarea>
+                            </div>
+                            <div class="form-control">
+                                <label for="input-action">Action (Tindakan Perbaikan) <span class="required">*</span></label>
+                                <textarea id="input-action" name="Action" rows="3" placeholder="Tindakan pemulihan layanan..." required></textarea>
+                                <span class="error-msg">Tindakan perbaikan harus diisi.</span>
+                            </div>
+                        </div>
+
+                        <!-- Section 5: Metadata & Docs -->
+                        <div class="form-section-group">
+                            <h4 class="group-title"><i class="fa-solid fa-user-gear"></i> 5. Pelaporan & Lampiran</h4>
+                            <div class="form-grid-2 mb-3">
+                                <div class="form-control">
+                                    <label for="input-created-by">Created By <span class="required">*</span></label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-user-plus"></i>
+                                        <input type="text" id="input-created-by" name="Created By" placeholder="Nama pembuat tiket" required>
+                                    </div>
+                                    <span class="error-msg">Nama pembuat tiket harus diisi.</span>
+                                </div>
+                                <div class="form-control">
+                                    <label for="input-closed-by">Closed By</label>
+                                    <div class="input-with-icon">
+                                        <i class="fa-solid fa-user-check"></i>
+                                        <input type="text" id="input-closed-by" name="Closed By" placeholder="Nama penutup tiket">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-control">
+                                <label for="input-timeline-docs">Timeline Docs (Link/URL)</label>
+                                <div class="input-with-icon">
+                                    <i class="fa-solid fa-link"></i>
+                                    <input type="url" id="input-timeline-docs" name="Timeline Docs" placeholder="https://drive.google.com/...">
+                                </div>
+                                <span class="error-msg">Masukkan format URL yang valid (http/https).</span>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="form-actions-bar">
+                            <button type="button" class="btn btn-secondary" id="btn-cancel-form-view">Batal</button>
+                            <button type="submit" class="btn btn-primary">
+                                <span id="btn-text">Simpan Tiket</span>
+                                <i class="fa-solid fa-floppy-disk"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Customer Side Drawer -->
+        <aside class="drawer" id="customer-drawer">
+            <div class="drawer-header">
+                <h3 id="customer-drawer-title">Tambah Customer Baru</h3>
+                <div class="drawer-header-actions">
+                    <button type="button" class="btn-close-drawer" id="btn-close-customer-drawer">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="drawer-body">
+                <div class="drawer-content">
+                    <form id="customer-form" class="responsive-form" novalidate>
+                        <div class="form-control mb-3">
+                            <label for="input-customer-id">Customer ID <span class="required">*</span></label>
+                            <input type="text" id="input-customer-id" name="Customer ID" readonly required class="readonly-input">
+                        </div>
+                        <div class="form-control mb-3">
+                            <label for="input-customer-name">Customer Name <span class="required">*</span></label>
+                            <div class="input-with-icon">
+                                <i class="fa-solid fa-user"></i>
+                                <input type="text" id="input-customer-name" name="Customer Name" placeholder="Contoh: Dinas Kesehatan" required>
+                            </div>
+                            <span class="error-msg">Nama customer harus diisi.</span>
+                        </div>
+                        <div class="form-control mb-3">
+                            <label for="input-customer-segment">Segment <span class="required">*</span></label>
+                            <select id="input-customer-segment" name="Segment" required>
+                                <option value="" disabled selected>Pilih Segment</option>
+                                <option value="Government">Government</option>
+                                <option value="Enterprise">Enterprise</option>
+                                <option value="Education">Education</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Finance">Finance</option>
+                                <option value="Retail/Other">Retail/Other</option>
+                            </select>
+                            <span class="error-msg">Pilih segment customer.</span>
+                        </div>
+                        <div class="form-control mb-3">
+                            <label for="input-customer-pic">PIC Name</label>
+                            <div class="input-with-icon">
+                                <i class="fa-solid fa-user-tie"></i>
+                                <input type="text" id="input-customer-pic" name="PIC Name" placeholder="Nama penanggung jawab">
+                            </div>
+                        </div>
+                        <div class="form-control mb-3">
+                            <label for="input-customer-contact">PIC Contact</label>
+                            <div class="input-with-icon">
+                                <i class="fa-solid fa-phone"></i>
+                                <input type="text" id="input-customer-contact" name="PIC Contact" placeholder="No HP atau email PIC">
+                            </div>
+                        </div>
+                        <div class="form-control mb-3">
+                            <label for="input-customer-address">Address</label>
+                            <textarea id="input-customer-address" name="Address" rows="3" placeholder="Alamat lengkap customer..."></textarea>
+                        </div>
+                        <div class="form-control mb-3">
+                            <label for="input-customer-status">Status <span class="required">*</span></label>
+                            <select id="input-customer-status" name="Status" required>
+                                <option value="Active" selected>Active</option>
+                                <option value="Inactive">Inactive</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-actions-bar mt-4">
+                            <button type="button" class="btn btn-secondary" id="btn-cancel-customer-drawer">Batal</button>
+                            <button type="submit" class="btn btn-primary">
+                                <span id="btn-customer-submit-text">Simpan</span>
+                                <i class="fa-solid fa-floppy-disk"></i>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden">
+        <i class="toast-icon fa-solid fa-circle-info"></i>
+        <span class="toast-message">Notifikasi</span>
+    </div>
+
+    <!-- JS Logic -->
+    <script src="app.js"></script>
+</body>
+</html>
